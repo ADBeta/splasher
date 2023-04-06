@@ -15,6 +15,7 @@
 
 #include "CLIah.hpp"
 #include "filemanager.hpp"
+#include "hardware.hpp"
 
 //Global BinFile object. Gets created via read or write command from CLI
 BinFile *binFile;

@@ -10,4 +10,32 @@
 * (c) ADBeta
 *******************************************************************************/
 
+#include "hardware.hpp"
+
+/*** Hardware SPI Interface ***************************************************/
+hwSPI::hwSPI(int SCLK, int MOSI, int MISO, int CS, int WP) {
+	
+	
+	
+	
+}
+
+void hwSPI::setTiming(unsigned int KHz) {
+	
+	
+	
+	
+}
+	
+void hwSPI::tx_byte(const char byte) {
+	
+	
+	
+}
+
+char hwSPI::rx_byte(void) {
+	char data = 0;
+	
+	return data;
+}
 

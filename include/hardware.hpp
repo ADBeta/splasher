@@ -22,6 +22,9 @@
 *
 * (c) ADBeta
 *******************************************************************************/
+
+#include "filemanager.hpp"
+
 #ifndef HARDWARE_H
 #define HARDWARE_H
 
@@ -37,24 +40,72 @@ enum class IFACE {
 	SPI, DSPI, QSPI, I2C
 };
 
-//List of supported protocols, e.g. 24 Series (I2C), 25 Series (SPI), Custom etc
+//List of supported protocols, e.g. 24 Series (I2C), 25 Series (SPI), etc
 enum class PROT {
 	S24, S25
 };
 
-class SplasherSPI {
+
+/*** Device Specific Struct ***************************************************/
+//Each device has a struct with data about itself, eg the size (bytes),
+//Interface, Protocol, Speed, offset
+struct Device {
+	IFACE interface;      //What interface is the device using?
+	PROT protocol;        //What protocol is the device compat with?
+	unsigned int KHz;     //How fast the device is in KHz
+	unsigned long bytes;  //How many bytes does the device store
+	unsigned long offset; //How many bytes to offset the read position	
+}; //struct Device
+
+/*** Hardware I2C Interface ***************************************************/
+class hwI2C {
+
+
+}; //class hwI2C
+
+/*** Hardware SPI Interface ***************************************************/
+class hwSPI {
 	public:
 	//Constructor. Pass the pin numbers to the onject class
-	SplasherSPI(int SCLK, int MOSI, int MISO, int CS, int WP);
-
+	hwSPI(int SCLK, int MOSI, int MISO, int CS, int WP);
 	
-
+	//Set the internal delay times for key aspects of the interface
+	void setTiming(unsigned int KHz);
+	
+	//Transmit a byte using the SPI interface
+	void tx_byte(const char byte);
+	//Receive a byte using the SPI interface
+	char rx_byte(void);
+	
 	private:
 	//hardware pins (Clock, M-Out, M-In, Chip Select, Write Protect)
 	int SCLK, MOSI, MISO, CS, WP;
+	
+	//Key timing delay values
+	unsigned int wait_clk, wait_byte, wait_bit;
 
 
-}; //SplasherSPI
+}; //class hwSPI
+
+/*** Hardware Dual SPI Interface **********************************************/
+class hwDSPI {
+
+
+
+}; //class heDSPI
+
+
+/*** Splasher hardware namespace **********************************************/
+namespace splasher {
+
+//Dump bytes from the Flash to the File. Pass file and device.
+//This function honours offset, KHz, size etc
+void dumpFlashToFile(const Device &dev, const BinFile &file);
+
+
+
+
+}; //namespace splasher
 
 
 

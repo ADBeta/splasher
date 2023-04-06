@@ -2,7 +2,7 @@
 
 splasher, Software Pi Flasher, is a Raspberry Pi program with the ability to 
 flash, dump, clone and erase SPI/I2C/DSPI/QSPI flash chips, including the 24 and
-25 series NAND and NOR ROMs.
+25 series NAND and NOR Flash Chips.
 
 WORK IN PROGRESS
 
@@ -45,10 +45,9 @@ TODO
 * DSPI
 * QSPI
 * I2C
-* Standard instruction models
-* size verification
 * pinout art
 * size input - bytes and eg 16M (megabit)
+* pass timing and speed to the spi funct
 
 ----
 ## Licence
