@@ -18,9 +18,7 @@ it fast and reliable.
 (DSPI, QSPI and I2C are under construction. Only spi mode is working)
 
 NOTES:
-Speed setting - Should they be in hz/MHz or in miliseconds per bit/byte???
-
-Default args (file & size) default to spi 25 series. WARN. speed?
+-s, --speed		Set the speed of the chip, in KHz. (-s max doesn't delay at all)
 
 ----
 ## Dependencies
