@@ -1,0 +1,8 @@
+The Raspberry Pi 1, using the pigpio C GPIO library, the max pulse speed is
+around 2.5MHz. This is slow enough to let a 0 delay take over
+
+the pigpio library does not handle gpioDelay(0), this still waits for 1us or
+more
+
+the lowest delay counts permitted in the library is 1 microseconds, meaning 1MHz
+if the maximum allowable (if nothing else slowed down the data stream)

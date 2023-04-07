@@ -52,9 +52,9 @@ enum class PROT {
 struct Device {
 	IFACE interface;      //What interface is the device using?
 	PROT protocol;        //What protocol is the device compat with?
-	unsigned int KHz;     //How fast the device is in KHz
+	unsigned int KHz;     //How fast the device is in KHz (0 = max speed)
 	unsigned long bytes;  //How many bytes does the device store
-	unsigned long offset; //How many bytes to offset the read position	
+	unsigned long offset; //How many bytes to offset the read position
 }; //struct Device
 
 /*** Hardware I2C Interface ***************************************************/
@@ -76,6 +76,8 @@ class hwSPI {
 	void tx_byte(const char byte);
 	//Receive a byte using the SPI interface
 	char rx_byte(void);
+	
+	//TODO start and stop a comms
 	
 	private:
 	//hardware pins (Clock, M-Out, M-In, Chip Select, Write Protect)

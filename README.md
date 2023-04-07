@@ -2,23 +2,19 @@
 
 splasher, Software Pi Flasher, is a Raspberry Pi program with the ability to 
 flash, dump, clone and erase SPI/I2C/DSPI/QSPI flash chips, including the 24 and
-25 series NAND and NOR Flash Chips.
+25 series NAND and NOR Flash Chips. Written in C++ using pigpio, it is fast,
+reliable and designed around the concept of compatibilty with any protocol or 
+interface possible.
+
+splasher allows interface speed selection down to 1KHz, for chips with slow
+interfaces, or damaged chips, up to 1MHz limited inerface for older but regular 
+chips. It also allows "max" to be passed to the speed flag, in order to delimit
+the interface (This varies wildly between 2MHz to 50MHz depending on model. be
+aware of this before use)
 
 WORK IN PROGRESS
 
-Features of this program include the ability to specify protocol speeds, for when
-certain chips use non-standard timings or have degraded to the point of needing 
-more time to latch in the data.  
-It also allows for the integration of multiple non-standard protocols, like DSPI
-and QSPI, and more (see splasher -h for more information)
-
-It has a very easy to use interface, and is written in C++ using pigpio to make
-it fast and reliable.
-
 (DSPI, QSPI and I2C are under construction. Only spi mode is working)
-
-NOTES:
--s, --speed		Set the speed of the chip, in KHz. (-s max doesn't delay at all)
 
 ----
 ## Dependencies
@@ -30,6 +26,7 @@ A tutorial of how to do this is [here](https://abyz.me.uk/rpi/pigpio/download.ht
 After installing pigpio, the compilation instructions are as follows:  
 ```
 git clone https://github.com/ADBeta/splasher.git
+unzip ./splasher-master.zip
 cd ./splasher-master
 make
 sudo make install

@@ -20,6 +20,20 @@
 //Global BinFile object. Gets created via read or write command from CLI
 BinFile *binFile;
 
+/*** Pre-defined output messages **********************************************/
+namespace message {
+const char *copyright = "\nsplasher 2023 ADBeta(c)";
+const char *malformed = "TODO must be the first argument\n";
+
+const char *shortHelp = "Usage: splasher [binary file] [options]\n\
+use --help for full help information\n";
+
+const char *longHelp = "Usage: splasher [binary file] [options]\n\n\
+By default \n\
+Options:\n\
+-h, --help\t\tShow this help message\n";
+} //namespace message
+
 /*** Main *********************************************************************/
 int main(int argc, char *argv[]){
 	/*** Define CLIah Arguments ***********************************************/
@@ -37,11 +51,22 @@ int main(int argc, char *argv[]){
 	//Get CLIah to scan the CLI Args
 	CLIah::analyseArgs(argc, argv);
 	
+	//If no arguments or strings were given, error with usage
+	if( argc == 1 ) {
+		std::cout << message::shortHelp << std::endl;
+	}
+	
 	//If help was requested, print the long help message then exit.
 	if( CLIah::isDetected("Help") ) {
-		//std::cout << message::longHelp << message::copyright << std::endl;
+		std::cout << message::longHelp << message::copyright << std::endl;
 		return 0;
 	}
+	
+	
+	
+	
+	
+	
 
 	binFile = new BinFile("./test.bin", 'w');
 	
