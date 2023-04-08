@@ -54,6 +54,8 @@ BinFile::~BinFile() {
 
 	//Delete the RAM array
 	delete byteArrayPtr;
+	
+	std::cout << "destruct filemanager BinFile success\n";
 }
 
 void BinFile::pushByteToArray(const char byte) {

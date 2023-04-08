@@ -46,7 +46,7 @@ class BinFile {
 	char *filename;		//filename string
 
 	//How many bytes can be be in the byteArray before it flushes
-	#define MAX_RAM_BYTES 1023
+	#define MAX_RAM_BYTES 10485760
 	//Pointer to heap array where data will be stored before pushing to a file.
 	char *byteArrayPtr;
 	//Current byte address to read or write in the 

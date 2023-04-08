@@ -15,8 +15,8 @@ OBJS := $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SRCS))
 CC := g++
 
 #Flags
-CPPFLAGS := -Iinclude -Wall #-pthread
-LDFLAGS  := #-lpigpio -lrt
+CPPFLAGS := -Iinclude -Wall -pthread -lpigpio -lrt
+LDFLAGS  := -lpigpio -lrt
 LDLIBS   := -lm
 
 .PHONY: all install clean

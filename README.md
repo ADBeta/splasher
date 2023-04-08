@@ -14,6 +14,17 @@ aware of this before use)
 
 WORK IN PROGRESS
 
+SPI Works, hardcoded to this pinout:
+SCLK	2
+MOSI	3
+MISO	4
+CS		14
+WP		15
+
+Leave WP unconnected
+
+I have not been able to validate the output of splasher yet, but i will soon
+
 (DSPI, QSPI and I2C are under construction. Only spi mode is working)
 
 ----

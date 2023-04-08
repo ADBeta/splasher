@@ -7,19 +7,6 @@
 * With the ability to support many protocols, including SPI, DSPI, QSPI, I2C,
 * and custom non-standard protocols certain manufacturers use.
 *
-* Notes: 
-* Standard 24x series Flash chips all share 0x03, followed by 24bits
-* for the read instruction and start address (offset)
-*
-* Dual Read seems to be standard DSPI, when running command 0x3B, followed 
-* by 24bit address
-*
-*
-*
-*
-*
-*
-*
 * (c) ADBeta
 *******************************************************************************/
 
@@ -33,7 +20,7 @@
 
 //TODO Pass binary file class via pointer 
 
-
+//TODO add protocol specific bytes to run commands
 
 //List of supported interfaces, selected via cli.
 enum class IFACE { 
@@ -69,19 +56,24 @@ class hwSPI {
 	//Constructor. Pass the pin numbers to the onject class
 	hwSPI(int SCLK, int MOSI, int MISO, int CS, int WP);
 	
+	//Initialise the interface to basic non-selected idle state
+	void init();
+	
 	//Set the internal delay times for key aspects of the interface
 	void setTiming(unsigned int KHz);
+	
+	//Start and stop the SPI comms
+	void start();
+	void stop();
 	
 	//Transmit a byte using the SPI interface
 	void tx_byte(const char byte);
 	//Receive a byte using the SPI interface
 	char rx_byte(void);
 	
-	//TODO start and stop a comms
-	
 	private:
 	//hardware pins (Clock, M-Out, M-In, Chip Select, Write Protect)
-	int SCLK, MOSI, MISO, CS, WP;
+	int io_SCLK, io_MOSI, io_MISO, io_CS, io_WP;
 	
 	//Key timing delay values
 	unsigned int wait_clk, wait_byte, wait_bit;
@@ -102,7 +94,7 @@ namespace splasher {
 
 //Dump bytes from the Flash to the File. Pass file and device.
 //This function honours offset, KHz, size etc
-void dumpFlashToFile(const Device &dev, const BinFile &file);
+void dumpFlashToFile(Device &dev, BinFile &file);
 
 
 
