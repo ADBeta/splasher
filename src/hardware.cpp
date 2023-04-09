@@ -41,6 +41,8 @@ void hwSPI::init() {
 	//Set MOSI and SCLK low to idle
 	gpioWrite(io_SCLK, 0);
 	gpioWrite(io_MOSI, 0);
+	//MISO LOW to pulldown
+	gpioWrite(io_MISO, 0);
 	
 	stop(); //Pulls the CS pin high and waits
 	//TODO Write Protect enable/disable function
@@ -94,22 +96,23 @@ char hwSPI::rx_byte(void) {
 		//shift the data byte 1 position to the left
 		data = data << 1;
 		
+		bool cBit = gpioRead(io_MISO);
+		
 		//Set the LSB of data to read from gpio
-		data = data | gpioRead(io_MISO);	
+		if(cBit != 0) data = data | 0x01;
+		
 		//Wait for the bit delay
 		if(wait_bit != 0) gpioDelay(wait_bit);
 		
-		
-		gpioWrite(io_SCLK, 1);                    //Set the clock pin HIGH
+		gpioWrite(io_SCLK, 1);                 //Set the clock pin HIGH
 		if(wait_clk != 0) gpioDelay(wait_clk); //Delay if selected
-		gpioWrite(io_SCLK, 0);                    //Set the clock pin LOW
+		gpioWrite(io_SCLK, 0);                 //Set the clock pin LOW
 		if(wait_clk != 0) gpioDelay(wait_clk); //Delay if selected
 	}
 	
 	//Wait for the byte delay if selected
 	if(wait_byte != 0) gpioDelay(wait_byte);	
 	
-	//std::cout << "rx val: " << std::hex << (int)data << "\n";
 	return data;
 }
 
@@ -138,16 +141,16 @@ void dumpFlashToFile(Device &dev, BinFile &file) {
 	dut.tx_byte(0x00);
 	dut.tx_byte(0x00);
 	
-	unsigned long bytesDone = 0;
+	unsigned long KiBDone = 0;
 
 	for(unsigned long cByte = 0; cByte < dev.bytes; cByte++) {
 		//Push the read byte to the file
 		file.pushByteToArray( dut.rx_byte() );
 
-		//Update user every 1000 bytes
-		if(cByte % 1000 == 0) {
-			++bytesDone;
-			std::cout << "Copied " << bytesDone * 1000 << " bytes\n";
+		//Update user every 1024 bytes
+		if(cByte % 1024 == 0) {
+			++KiBDone;
+			std::cout << "Copied " << KiBDone << " KiB s\r";
 		}
 	}
 	

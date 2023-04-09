@@ -9,7 +9,7 @@
 *
 * (c) ADBeta
 * v0.0.1
-* 03 Apr 2023
+* 09 Apr 2023
 *******************************************************************************/
 #include <iostream>
 
@@ -25,16 +25,28 @@ BinFile *binFile;
 /*** Pre-defined output messages **********************************************/
 namespace message {
 const char *copyright = "\nsplasher 2023 ADBeta(c)";
-const char *malformed = "TODO......... must be the first argument\n";
 
 const char *shortHelp = "Usage: splasher [binary file] [options]\n\
 use --help for full help information\n";
 
-const char *longHelp = "Usage: splasher [binary file] [options]\n\n\
-By default .......todo \n\
+const char *longHelp =  "Usage: splasher [binary file] [options]\n\n\
+By default .......TODO \n\
 Options:\n\
 -h, --help\t\tShow this help message\n\
--b, --bytes\t\tHow many bytes to read from the device\n";
+-b, --bytes\t\tHow many bytes to read from the device. Allows K and M suffix \
+to specify KiB or MiB\n\
+-s, --speed\t\t(in KHz) The speed of the CLK pin cycle, All other timings \
+derive from this. (\"-s max\" unlimits the bus speed)\n";
+
+
+const char *speedNotValid = "Speed (in KHz) input is invalid\n";
+const char *speedTooHigh = "Speed (in KHz) is too high, Maximum is 1000KHz\n";
+const char *speedDefault = "Speed not specified, using default of 100KHz\n";
+
+const char *bytesNotValid = "Bytes argument input is invalid. valid input e.g. \
+-b 100    -b 100K    -b 2M\n";
+const char *bytesNotSpecified = "Bytes to read has not been specified\n";
+
 } //namespace message
 
 /*** Main *********************************************************************/
@@ -51,6 +63,7 @@ int main(int argc, char *argv[]){
 	CLIah::Config::verbose = true; //Set verbosity when match is found
 	CLIah::Config::stringsEnabled = true; //Set arbitrary strings allowed
 	
+	//Request help message
 	CLIah::addNewArg(
 		"Help",                 //Reference
 		"--help",               //Primary match string
@@ -58,14 +71,23 @@ int main(int argc, char *argv[]){
 		"-h"                    //Alias match string
 	);
 
+	//Speed (in KHz) of the device
 	CLIah::addNewArg(
-		"Bytes",                      //Reference
-		"--bytes",                    //Primary match string
-		CLIah::ArgType::subcommand,   //Argument type
-		"-b"                          //Alias match string
+		"Speed",
+		"--speed",
+		CLIah::ArgType::subcommand,
+		"-s"
 	);
 
-	/*** User Argument handling ***********************************************/
+	//How many bytes to read from device
+	CLIah::addNewArg(
+		"Bytes",
+		"--bytes",
+		CLIah::ArgType::subcommand,
+		"-b"
+	);
+
+	/***TODO User Argument handling ***********************************************/
 	//Get CLIah to scan the CLI Args
 	CLIah::analyseArgs(argc, argv);
 	
@@ -104,19 +126,113 @@ int main(int argc, char *argv[]){
 	}; //struct Device
 	*/
 	
-	//Primary Device (will add secDev
+	//Primary Device object created
 	Device priDev;
 	
-	//Find the --bytes or -b flag, MUST BE DETECTED (TODO)
-	if( CLIah::isDetected("Bytes") ) {
-		priDev.bytes = std::stoi(CLIah::getSubstring("Bytes"));
+	/*** Get KHz speed of device **********************************************/
+	if( CLIah::isDetected("Speed") ) {
+		//Copy the argVector string to its own string to allow faster testing
+		std::string speedString = CLIah::getSubstring("Speed");
+		
+		//First check if the input is "max"
+		if(speedString.compare("max") == 0) {
+			//Unlimit the KHz
+			priDev.KHz = 0;
+			//break from if
+			break;
+		}
+		
+		//If the string contains non-numeral chars, error and exit
+		if(speedString.find_first_not_of("0123456789") != std::string::npos) {
+			std::cerr << message::speedNotValid;
+			exit(EXIT_FAILURE);
+		}
+		
+		//Otherwise, convert it to an int
+		unsigned int speedInt = std::stoi(speedString);
+		
+		//Detect if the input value is too high, otherwise continue
+		if(speedInt > 1000) {
+			std::cerr << message::speedTooHigh;
+			exit(EXIT_FAILURE);
+		}
+		
+		priDev.KHz = speedInt;
 	} else {
-		std::cerr << "Error: No byte size provided" << std::endl;
+		//If no user input, warn that default is being used, and set it
+		std::cout << speedDefault;
+		priDev.KHz = 100;
+	}
+	
+	
+		
+		
+	
+	/*** Get bytes to read from device ****************************************/
+	//Get bytes from user if specified TODO add auto detect
+	if( CLIah::isDetected("Bytes") ) {
+		//Copy the argVector string to its own string to allow faster testing
+		std::string byteString = CLIah::getSubstring("Bytes");
+		
+		//Keep a multiplier, 1 by default for bytes, changes via 'K' or 'M'
+		unsigned int multiplier = 1;
+		
+		/*** Detect Multiplier Char *******************************************/
+		//Find the first non-numeral character in the string
+		size_t notNumeral = byteString.find_first_not_of("0123456789");
+		//Get the index of the last char in the string
+		size_t lastIndx = byteString.length() - 1;
+		
+		//If there is a non-numeral char in the string, check it
+		if(notNumeral != std::string::npos) {
+			//if that non-numeral char is NOT the last char, error
+			if(notNumeral != lastIndx) {
+				std::cerr << message::bytesNotValid;
+				exit(EXIT_FAILURE);
+			}
+			
+			//If the last char is either 'K' or 'M' adjust the multiplyer
+			char lastChar = byteString[lastIndx];
+			if(lastChar == 'K') {
+				multiplier = 1024; //1KiB
+				
+			} else if(lastChar == 'M') {
+				multiplier = 1048576; //1MiB
+			
+			} else {
+				//if the last char is NOT 'K' or 'M', Error and exit
+				std::cerr << message::bytesNotValid;
+				exit(EXIT_FAILURE);
+			}
+			
+			//Remove the last char from the string, we are done with it
+			byteString.pop_back();
+		}
+		
+		/*** Convert and multiply the input number ****************************/
+		//convert the passed string into an int and set device bytes
+		priDev.bytes = std::stoi(byteString) * multiplier;
+		
+		//TODO Move this to the read funct - print byte size
+		std::cout << argBytes << std::endl;
+		
+	} else {
+		std::cerr << message::bytesNotSpecified;
 		exit(EXIT_FAILURE);
 	}
 	
 	
+	
+	
+	
+	
+	
 	splasher::dumpFlashToFile(priDev, *binFile);
+	
+	
+	
+	
+	
 	
 	//Delete the BinFile object to force its desturctor to call. Closes file
 	delete binFile;
