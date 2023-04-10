@@ -39,7 +39,7 @@ enum class PROT {
 struct Device {
 	IFACE interface;      //What interface is the device using?
 	PROT protocol;        //What protocol is the device compat with?
-	unsigned int KHz;     //How fast the device is in KHz (0 = max speed)
+	int KHz;              //How fast the device is in KHz (0 = max speed)
 	unsigned long bytes;  //How many bytes does the device store
 	unsigned long offset; //How many bytes to offset the read position
 }; //struct Device

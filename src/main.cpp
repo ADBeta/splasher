@@ -19,9 +19,6 @@
 #include "filemanager.hpp"
 #include "hardware.hpp"
 
-//Global BinFile object. Gets created via read or write command from CLI
-BinFile *binFile;
-
 /*** Pre-defined output messages **********************************************/
 namespace message {
 const char *copyright = "\nsplasher 2023 ADBeta(c)";
@@ -49,10 +46,48 @@ const char *bytesNotSpecified = "Bytes to read has not been specified\n";
 
 } //namespace message
 
+/*** Helper functions *********************************************************/
+//converts a string into a KHz value - for user argument handling
+//Negative values are coded errors (-1 not valid   -2 too large input)
+int convertKHz(std::string speedString) {
+	//First check if the input is "max"
+	if(speedString.compare("max") == 0) {
+		//Unlimit the KHz
+		return 0;
+	}
+	
+	//If the string contains non-numeral chars, error -1
+	if(speedString.find_first_not_of("0123456789") != std::string::npos) {
+		std::cerr << message::speedNotValid;
+		return -1;
+	}
+	
+	//Otherwise, convert it to an int
+	int speedInt = std::stoi(speedString);
+	
+	//Detect if the input value is too high, if so return -2
+	if(speedInt > 1000) {
+		std::cerr << message::speedTooHigh;
+		return -2;
+	}
+	
+	//If no errors, return the speed int
+	return speedInt;
+}
+
+unsigned long convertBytes(std::string byteString) {
+
+} //TODO
+
+
+
+//Global BinFile object. Gets created via read or write command from CLI
+BinFile *binFile; //TODO move to main
+
 /*** Main *********************************************************************/
 int main(int argc, char *argv[]){
 	/*** Generic pigpio stuff *************************************************/
-	if(gpioInitialise() < 0) {
+	if(gpioInitialise() < 0) { //TODO message and return exit_failure
 		std::cerr << "Error: Failed to initialise the GPIO" << std::endl;
 		return 1;
 	}
@@ -120,7 +155,7 @@ int main(int argc, char *argv[]){
 	struct Device {
 		IFACE interface;      //What interface is the device using?
 		PROT protocol;        //What protocol is the device compat with?
-		unsigned int KHz;     //How fast the device is in KHz (0 = max speed)
+		int KHz;     //How fast the device is in KHz (0 = max speed)
 		unsigned long bytes;  //How many bytes does the device store
 		unsigned long offset; //How many bytes to offset the read position
 	}; //struct Device
@@ -131,36 +166,19 @@ int main(int argc, char *argv[]){
 	
 	/*** Get KHz speed of device **********************************************/
 	if( CLIah::isDetected("Speed") ) {
-		//Copy the argVector string to its own string to allow faster testing
-		std::string speedString = CLIah::getSubstring("Speed");
+		//Convert the KHz string into an int
+		int KHzVal = convertKHz( CLIah::getSubstring("Speed") );
 		
-		//First check if the input is "max"
-		if(speedString.compare("max") == 0) {
-			//Unlimit the KHz
-			priDev.KHz = 0;
-			//break from if
-			break;
-		}
+		//If the return int is one of the -x errors, exit
+		if(KHzVal < 0) exit(EXIT_FAILURE);
 		
-		//If the string contains non-numeral chars, error and exit
-		if(speedString.find_first_not_of("0123456789") != std::string::npos) {
-			std::cerr << message::speedNotValid;
-			exit(EXIT_FAILURE);
-		}
 		
-		//Otherwise, convert it to an int
-		unsigned int speedInt = std::stoi(speedString);
+		std::cout << "Running at " << KHzVal << "KHz\n";
+		priDev.KHz = KHzVal;
 		
-		//Detect if the input value is too high, otherwise continue
-		if(speedInt > 1000) {
-			std::cerr << message::speedTooHigh;
-			exit(EXIT_FAILURE);
-		}
-		
-		priDev.KHz = speedInt;
 	} else {
 		//If no user input, warn that default is being used, and set it
-		std::cout << speedDefault;
+		std::cout << message::speedDefault; //TODO Remove this message
 		priDev.KHz = 100;
 	}
 	
@@ -214,7 +232,7 @@ int main(int argc, char *argv[]){
 		priDev.bytes = std::stoi(byteString) * multiplier;
 		
 		//TODO Move this to the read funct - print byte size
-		std::cout << argBytes << std::endl;
+		std::cout << priDev.bytes << std::endl;
 		
 	} else {
 		std::cerr << message::bytesNotSpecified;
