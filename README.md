@@ -21,8 +21,8 @@ side-effect of using pigpio.
 To use, call splasher, pass a file to output to, and how many bytes to read (required)  
 e.g `splasher output.bin -b 16M`  
 
-The pinout (hard coded at the moment) is as follows:
-###IMAGE
+The Default Pinout is as follows:
+[https://github.com/ADBeta/splasher/blob/main/Pinout.png]
 
 ```
 SCLK		2
@@ -32,6 +32,9 @@ MISO		4
 CS		14
 WP		15
 ```
+
+It sould be idential between Pi1, Pi2, Pi3, Pi4, PiZero etc.
+
 
 The inbuilt help (`splasher --help`) will have more info, but for a basic 
 rundown of the programs arguments:  
