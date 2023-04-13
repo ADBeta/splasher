@@ -9,7 +9,7 @@
 *
 * (c) ADBeta
 * v0.0.1
-* 09 Apr 2023
+* 11 Apr 2023
 *******************************************************************************/
 #include <iostream>
 
@@ -43,7 +43,7 @@ const char *speedDefault = "Speed not specified, using default of 100KHz\n";
 const char *bytesNotValid = "Bytes argument input is invalid. valid input e.g. \
 -b 100    -b 100K    -b 2M\n";
 const char *bytesNotSpecified = "Bytes to read has not been specified\n";
-
+const char *bytesTooLarge = "Bytes is too large, byte limit is 256MiB\n";
 } //namespace message
 
 /*** Helper functions *********************************************************/
@@ -76,10 +76,57 @@ int convertKHz(std::string speedString) {
 }
 
 unsigned long convertBytes(std::string byteString) {
+	//Keep a multiplier, 1 by default for bytes, changes via 'K' or 'M'
+	unsigned int multiplier = 1;
+	
+	/*** Detect Multiplier Char ***********************************************/
+	//Find the first non-numeral character in the string
+	size_t notNumeral = byteString.find_first_not_of("0123456789");
+	//Get the index of the last char in the string
+	size_t lastIndx = byteString.length() - 1;
+	
+	//If there is a non-numeral char in the string, check it
+	if(notNumeral != std::string::npos) {
+		//if that non-numeral char is NOT the last char, error
+		if(notNumeral != lastIndx) {
+			std::cerr << message::bytesNotValid;
+			return 0;
+		}
+		
+		//If the last char is either 'K' or 'M' adjust the multiplier
+		char lastChar = byteString[lastIndx];
+		if(lastChar == 'K') {
+			multiplier = 1024; //1KiB
+			
+		} else if(lastChar == 'M') {
+			multiplier = 1048576; //1MiB
+		
+		} else {
+			//if the last char is NOT 'K' or 'M', Error and exit
+			std::cerr << message::bytesNotValid;
+			return 0;
+		}
+		
+		//Remove the last char from the string, we are done with it
+		byteString.pop_back();
+	}
+	
+	/*** Convert and multiply the input number ********************************/
+	//convert the passed string into an int and set device bytes
+	unsigned long bytes = std::stoi(byteString) * multiplier;
+	
+	//Make sure the bytes are not too high (Limit to 256MB)
+	if(bytes > 268435456) {
+		std::cerr << message::bytesTooLarge;
+		return 0;
+	}
+	
+	//If everything is good, return the value
+	return bytes;
 
-} //TODO
+}
 
-
+/******************************************************************************/
 
 //Global BinFile object. Gets created via read or write command from CLI
 BinFile *binFile; //TODO move to main
@@ -95,7 +142,7 @@ int main(int argc, char *argv[]){
 	std::cout << "EVALUATION DEMO ONLY" << std::endl;
 
 	/*** Define CLIah Arguments ***********************************************/
-	CLIah::Config::verbose = true; //Set verbosity when match is found
+	//CLIah::Config::verbose = true; //Set verbosity when match is found
 	CLIah::Config::stringsEnabled = true; //Set arbitrary strings allowed
 	
 	//Request help message
@@ -172,68 +219,23 @@ int main(int argc, char *argv[]){
 		//If the return int is one of the -x errors, exit
 		if(KHzVal < 0) exit(EXIT_FAILURE);
 		
-		
-		std::cout << "Running at " << KHzVal << "KHz\n";
 		priDev.KHz = KHzVal;
 		
 	} else {
 		//If no user input, warn that default is being used, and set it
-		std::cout << message::speedDefault; //TODO Remove this message
+		std::cout << message::speedDefault; //TODO Remove this message to funct
 		priDev.KHz = 100;
 	}
-	
-	
-		
-		
 	
 	/*** Get bytes to read from device ****************************************/
 	//Get bytes from user if specified TODO add auto detect
 	if( CLIah::isDetected("Bytes") ) {
-		//Copy the argVector string to its own string to allow faster testing
-		std::string byteString = CLIah::getSubstring("Bytes");
+		unsigned long byteVal = convertBytes( CLIah::getSubstring("Bytes") );
 		
-		//Keep a multiplier, 1 by default for bytes, changes via 'K' or 'M'
-		unsigned int multiplier = 1;
+		//If byteVal is 0, either via passed val, or due to error, exit
+		if(byteVal == 0) exit(EXIT_FAILURE);
 		
-		/*** Detect Multiplier Char *******************************************/
-		//Find the first non-numeral character in the string
-		size_t notNumeral = byteString.find_first_not_of("0123456789");
-		//Get the index of the last char in the string
-		size_t lastIndx = byteString.length() - 1;
-		
-		//If there is a non-numeral char in the string, check it
-		if(notNumeral != std::string::npos) {
-			//if that non-numeral char is NOT the last char, error
-			if(notNumeral != lastIndx) {
-				std::cerr << message::bytesNotValid;
-				exit(EXIT_FAILURE);
-			}
-			
-			//If the last char is either 'K' or 'M' adjust the multiplyer
-			char lastChar = byteString[lastIndx];
-			if(lastChar == 'K') {
-				multiplier = 1024; //1KiB
-				
-			} else if(lastChar == 'M') {
-				multiplier = 1048576; //1MiB
-			
-			} else {
-				//if the last char is NOT 'K' or 'M', Error and exit
-				std::cerr << message::bytesNotValid;
-				exit(EXIT_FAILURE);
-			}
-			
-			//Remove the last char from the string, we are done with it
-			byteString.pop_back();
-		}
-		
-		/*** Convert and multiply the input number ****************************/
-		//convert the passed string into an int and set device bytes
-		priDev.bytes = std::stoi(byteString) * multiplier;
-		
-		//TODO Move this to the read funct - print byte size
-		std::cout << priDev.bytes << std::endl;
-		
+		priDev.bytes = byteVal;		
 	} else {
 		std::cerr << message::bytesNotSpecified;
 		exit(EXIT_FAILURE);

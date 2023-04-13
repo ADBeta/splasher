@@ -14,6 +14,32 @@ aware of this before use)
 
 WORK IN PROGRESS
 
+## How To Use
+When running splasher, you will need to use `sudo`, this is normal, and is a
+side-effect of using pigpio.
+
+To use, call splasher, pass a file to output to, and how many bytes to read (required)  
+e.g `splasher output.bin -b 16M`  
+
+The pinout (hard coded at the moment) is as follows:
+###IMAGE
+
+```
+SCLK	2
+MOSI	3
+MISO	4
+
+CS		14
+WP		15
+```
+
+The inbuilt help (`splasher --help`) will have more info, but for a basic 
+rundown of the programs arguments:  
+* -b or --bytes		This can be followed with 123456, 10K (10 KiB) or 16M (16 MiB)
+* -s or --speed		This allows you to specify the speed of splasher in KHz 
+(Not yet working). You can pass any number up to 1000, or max to delimit the bus
+speed and read/write faster. Be aware this can change drastically per Pi model.
+
 SPI Works, hardcoded to this pinout:
 SCLK	2
 MOSI	3

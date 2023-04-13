@@ -45,12 +45,13 @@ void hwSPI::init() {
 	gpioWrite(io_MISO, 0);
 	
 	stop(); //Pulls the CS pin high and waits
+	
 	//TODO Write Protect enable/disable function
 }
 
 void hwSPI::setTiming(unsigned int KHz) {
 	wait_byte = 1;
-	wait_bit = 0;
+	wait_bit = 1;
 	
 	wait_clk = 1;
 }
@@ -66,7 +67,7 @@ void hwSPI::stop() {
 	//Push CS high to stop the SPI comms interface
 	gpioWrite(io_CS, 1);
 	//wait for the byte delay if set, allows the chip to wake up
-	if(wait_byte != 0) gpioDelay(wait_byte);	
+	if(wait_byte != 0) gpioDelay(wait_byte);
 }
 	
 void hwSPI::tx_byte(const char byte) {
@@ -125,6 +126,11 @@ namespace splasher {
 
 void dumpFlashToFile(Device &dev, BinFile &file) {
 	//TODO This is forced to use SPI for the moment. Fix this
+	//TODO inherit "readBytes" or something function
+	
+	/*** Information printing, Agnostic of protocol ***************************/
+	std::cout << "\nReading " << dev.bytes << " bytes, at " << dev.KHz
+	          << "KHz to " << file.getFilename() << "\n\n" << std::flush;
 	
 	//create a new SPI interface (25 series) with forced pinout
 	hwSPI dut(2, 3, 4, 14, 15);
@@ -133,26 +139,33 @@ void dumpFlashToFile(Device &dev, BinFile &file) {
 	
 	dut.start();
 	
-	//Read SPI command
+	//SPI 25 Series "Read" command
 	dut.tx_byte(0x03);
 	
-	//Address (forced to start from 0)
+	//Address (forced to start from 0) for now TODO
 	dut.tx_byte(0x00);
 	dut.tx_byte(0x00);
 	dut.tx_byte(0x00);
 	
+	//Init some values for the loop (Temporary)
 	unsigned long KiBDone = 0;
+	unsigned long maxByte = dev.bytes + 1;
 
-	for(unsigned long cByte = 0; cByte < dev.bytes; cByte++) {
+	for(unsigned long cByte = 1; cByte < maxByte; cByte++) {
 		//Push the read byte to the file
 		file.pushByteToArray( dut.rx_byte() );
-
+		
 		//Update user every 1024 bytes
 		if(cByte % 1024 == 0) {
 			++KiBDone;
-			std::cout << "Copied " << KiBDone << " KiB s\r";
+			
+			//Go to beginning of line (Requires \n) and print status
+			std::cout << "\rDumped " << KiBDone << "KiB" << std::flush;
 		}
 	}
+	
+	//Print finished message
+	std::cout << "\n\nFinished dumping to " << file.getFilename() << std::endl;
 	
 	dut.stop();
 	

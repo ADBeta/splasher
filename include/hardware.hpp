@@ -75,8 +75,8 @@ class hwSPI {
 	//hardware pins (Clock, M-Out, M-In, Chip Select, Write Protect)
 	int io_SCLK, io_MOSI, io_MISO, io_CS, io_WP;
 	
-	//Key timing delay values
-	unsigned int wait_clk, wait_byte, wait_bit;
+	//Key timing delay values. Default 0, full speed
+	unsigned int wait_clk = 0, wait_byte = 0, wait_bit = 0;
 
 
 }; //class hwSPI

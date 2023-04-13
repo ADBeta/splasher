@@ -58,6 +58,10 @@ BinFile::~BinFile() {
 	std::cout << "destruct filemanager BinFile success\n";
 }
 
+std::string BinFile::getFilename() {
+	return (std::string)this->filename;
+}
+
 void BinFile::pushByteToArray(const char byte) {
 	//Check if the current byte pos equals the MAX_RAM_BYTES
 	if(byteArrayPos == MAX_RAM_BYTES) {

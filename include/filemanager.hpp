@@ -27,6 +27,9 @@ class BinFile {
 	//closes the file
 	~BinFile();
 	
+	/*** File Metadata Functions **********************************************/
+	std::string getFilename();
+	
 	/*** File Reading Functions ***********************************************/
 	//Push a byte to the byteArray. This will automatically flush the array to 
 	//the binary file when the array becomes full.
@@ -42,9 +45,9 @@ class BinFile {
 
 
 	private:
-	std::fstream file;	//File object
-	char *filename;		//filename string
-
+	std::fstream file; //File object
+	char *filename; //Filename string
+	
 	//How many bytes can be be in the byteArray before it flushes
 	#define MAX_RAM_BYTES 10485760
 	//Pointer to heap array where data will be stored before pushing to a file.

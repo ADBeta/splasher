@@ -16,8 +16,7 @@ CC := g++
 
 #Flags
 CPPFLAGS := -Iinclude -Wall -pthread -lpigpio -lrt
-LDFLAGS  := -lpigpio -lrt
-LDLIBS   := -lm
+LDFLAGS  := -lpigpio -lrt -lpthread
 
 .PHONY: all install clean
 
@@ -25,7 +24,7 @@ all: $(TARGET)
 
 #Make binary
 $(TARGET): $(OBJS) | $(BIN_DIR)
-	$(CC) $(LDFLAGS) $^ -o $@
+	$(CC) $^ -o $@ $(LDFLAGS)
 
 #Make objects
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
