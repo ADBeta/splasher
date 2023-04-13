@@ -21,8 +21,8 @@ side-effect of using pigpio.
 To use, call splasher, pass a file to output to, and how many bytes to read (required)  
 e.g `splasher output.bin -b 16M`  
 
-The Default Pinout is as follows:
-[https://github.com/ADBeta/splasher/blob/main/Pinout.png]
+The Default Pinout is as follows:  
+![](https://github.com/ADBeta/splasher/blob/main/Pinout.png)
 
 ```
 SCLK		2
