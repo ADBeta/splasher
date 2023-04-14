@@ -25,16 +25,17 @@ The Default Pinout is as follows:
 ![](https://github.com/ADBeta/splasher/blob/main/Pinout.png)
 
 ```
-SCLK		2
-MOSI		3
-MISO		4
+SCLK    2
+MISO    3
+MOSI    4
 
-CS		14
-WP		15
+HOLD    17
+CS      27
+WP      22
 ```
 
-It sould be idential between Pi1, Pi2, Pi3, Pi4, PiZero etc.
-
+It sould be identical between Pi1, Pi2, Pi3, Pi4, PiZero etc.
+**Raspberry Pi 1 REVISION 1 Boards are not supported with the standard pinout**
 
 The inbuilt help (`splasher --help`) will have more info, but for a basic 
 rundown of the programs arguments:  
@@ -54,7 +55,6 @@ This program requires that you have the pigpio library istalled.
 A tutorial of how to do this is [here](https://abyz.me.uk/rpi/pigpio/download.html)
 
 ## Compilation
-#### Linux
 After installing pigpio, the compilation instructions are as follows:  
 ```
 git clone https://github.com/ADBeta/splasher.git
@@ -69,12 +69,11 @@ TODO
 
 ## TODO
 * JEDEC ID
-* auto bytes to read detect if not specified
-* decide upon standard for default input
 * DSPI
 * QSPI
 * I2C
-* pinout art
+* init read / init write
+* inherited class members (for expansion)
 
 ----
 ## Licence
