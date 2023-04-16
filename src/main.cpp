@@ -128,9 +128,6 @@ unsigned long convertBytes(std::string byteString) {
 
 /******************************************************************************/
 
-//Global BinFile object. Gets created via read or write command from CLI
-BinFile *binFile; //TODO move to main
-
 /*** Main *********************************************************************/
 int main(int argc, char *argv[]){
 	/*** Generic pigpio stuff *************************************************/
@@ -185,16 +182,19 @@ int main(int argc, char *argv[]){
 		exit(EXIT_SUCCESS);
 	}
 	
-	/*** Filename handling ****************************************************/
+	/*** Filename handling ****************************************************/	
 	//Get the user input filename, error if one is not provided
 	if( CLIah::stringVector.size() == 0 ) {
 		std::cerr << "Error: No filename provided" << std::endl;
 		exit(EXIT_FAILURE);
 	}
-	const char *filename = CLIah::stringVector.at(0).string.c_str();
+	
+	//Open the passed filename
+	const char *filenameStr = CLIah::stringVector.at(0).string.c_str();
 
 	//Open a bin file, force write for now.
-	binFile = new BinFile( filename, 'w' );
+	//BinFile object decelaration //TODO make read/write flag
+	BinFile binFile(filenameStr, 'w');
 	
 	
 	/*** Device creation ******************************************************/
@@ -247,17 +247,12 @@ int main(int argc, char *argv[]){
 	
 	
 	
-	splasher::dumpFlashToFile(priDev, *binFile);
+	Splasher::dumpFlashToFile(priDev, binFile);
 	
 	
 	
 	
-	
-	
-	//Delete the BinFile object to force its desturctor to call. Closes file
-	delete binFile;
-
 	//Terminate the GPIO handler and exit
-	//gpioTerminate();
+	gpioTerminate();
 	return 0;
 } 

@@ -17,44 +17,40 @@
 
 //TODO Namespace for common limits (bits/bytes, speed etc
 
-
-//TODO Pass binary file class via pointer 
-
 //TODO add protocol specific bytes to run commands
 
 //List of supported interfaces, selected via cli.
-enum class IFACE { 
+enum class Interface { 
 	SPI, DSPI, QSPI, I2C
 };
 
 //List of supported protocols, e.g. 24 Series (I2C), 25 Series (SPI), etc
-enum class PROT {
-	S24, S25
+enum class Protocol {
+	W24, W25 //TODO name these
 };
 
 
 /*** Device Specific Struct ***************************************************/
 //Each device has a struct with data about itself, eg the size (bytes),
 //Interface, Protocol, Speed, offset
-struct Device {
-	IFACE interface;      //What interface is the device using?
-	PROT protocol;        //What protocol is the device compat with?
+class Device {
+	public:
+	Interface iface;      //What interface is the device using?
+	Protocol prot;        //What protocol is the device compat with?
 	int KHz;              //How fast the device is in KHz (0 = max speed)
 	unsigned long bytes;  //How many bytes does the device store
 	unsigned long offset; //How many bytes to offset the read position
-}; //struct Device
+	
+	//Print the device info to cout
+	void print();
+	
+}; //class Device
 
-/*** Hardware I2C Interface ***************************************************/
-class hwI2C {
-
-
-}; //class hwI2C
-
-/*** Hardware SPI Interface ***************************************************/
-class hwSPI {
+/*** SPI Interface ************************************************************/
+class ifaceSPI {
 	public:
 	//Constructor. Pass the pin numbers to the onject class
-	hwSPI(int SCLK, int MOSI, int MISO, int CS, int WP);
+	ifaceSPI(int SCLK, int MISO, int MOSI, int HOLD, int CS, int WP);
 	
 	//Initialise the interface to basic non-selected idle state
 	void init();
@@ -62,7 +58,7 @@ class hwSPI {
 	//Set the internal delay times for key aspects of the interface
 	void setTiming(unsigned int KHz);
 	
-	//Start and stop the SPI comms
+	//Start and stop the SPI bus
 	void start();
 	void stop();
 	
@@ -73,24 +69,17 @@ class hwSPI {
 	
 	private:
 	//hardware pins (Clock, M-Out, M-In, Chip Select, Write Protect)
-	int io_SCLK, io_MOSI, io_MISO, io_CS, io_WP;
+	int io_SCLK, io_MISO, io_MOSI, io_HOLD, io_CS, io_WP;
 	
 	//Key timing delay values. Default 0, full speed
 	unsigned int wait_clk = 0, wait_byte = 0, wait_bit = 0;
-
-
-}; //class hwSPI
-
-/*** Hardware Dual SPI Interface **********************************************/
-class hwDSPI {
+}; //class ifaceSPI
 
 
 
-}; //class heDSPI
 
-
-/*** Splasher hardware namespace **********************************************/
-namespace splasher {
+/*** Splasher General Functions ***********************************************/
+namespace Splasher {
 
 //Dump bytes from the Flash to the File. Pass file and device.
 //This function honours offset, KHz, size etc

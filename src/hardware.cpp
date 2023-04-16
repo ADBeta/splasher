@@ -14,63 +14,84 @@
 #include <iostream>
 #include <pigpio.h>
 
-/*** Hardware SPI Interface ***************************************************/
-hwSPI::hwSPI(int SCLK, int MOSI, int MISO, int CS, int WP) {
+/*** Device Class Functions ***************************************************/
+void Device::print() {
+	//TODO device string selectable from array or group
+	std::cout << "Reading -an SPI- deivce: " << this->bytes << " bytes at " 
+	          << this->KHz << "KHz" << std::endl;
+	          
+	//TODO offset print
+}
+
+
+/*** SPI Interface (((((((((***************************************************/
+ifaceSPI::ifaceSPI(int SCLK, int MISO, int MOSI, int HOLD, int CS, int WP) {
 	//Set the object pins to the passed pins
 	io_SCLK = SCLK;
-	io_MOSI = MOSI;
 	io_MISO = MISO;
+	io_MOSI = MOSI;
+	io_HOLD = HOLD;
 	io_CS = CS;
 	io_WP = WP;
 	
 	//Set the GPIO pinout to idle the interface
 	init();
-	
 }
 
-void hwSPI::init() {
+void ifaceSPI::init() {
 	//Set the output pins
 	gpioSetMode(io_SCLK, PI_OUTPUT);
 	gpioSetMode(io_MOSI, PI_OUTPUT);
+	gpioSetMode(io_HOLD, PI_OUTPUT);
 	gpioSetMode(io_CS, PI_OUTPUT);
 	gpioSetMode(io_WP, PI_OUTPUT);
 	
 	//MISO is an input (Master In)
 	gpioSetMode(io_MISO, PI_INPUT);
 	
-	//Set MOSI and SCLK low to idle
+	//Set pins to idle state
 	gpioWrite(io_SCLK, 0);
 	gpioWrite(io_MOSI, 0);
-	//MISO LOW to pulldown
 	gpioWrite(io_MISO, 0);
 	
-	stop(); //Pulls the CS pin high and waits
+	//Pull CS high so it is idle
+	gpioWrite(io_CS, 1);
 	
-	//TODO Write Protect enable/disable function
+	//Pull HOLD high, so chips is active, not reset
+	gpioWrite(io_HOLD, 1);
+	
+	//leave write protect alone until read/write functions
 }
 
-void hwSPI::setTiming(unsigned int KHz) {
+void ifaceSPI::setTiming(unsigned int KHz) { //TODO
+	//if the input is 0, max was selected, set no delay
+	if(KHz == 0) {
+		wait_byte = 0;
+		wait_bit = 0;
+		wait_clk = 0;
+	}
+	
+	//otherwise TODO
 	wait_byte = 1;
 	wait_bit = 1;
-	
 	wait_clk = 1;
 }
 
-void hwSPI::start() {
+void ifaceSPI::start() {
 	//Pull CS low to initilaise the SPI interface
 	gpioWrite(io_CS, 0);
 	//wait for the byte delay if set, allows the chip to wake up
 	if(wait_byte != 0) gpioDelay(wait_byte);	
 }
 
-void hwSPI::stop() {
+void ifaceSPI::stop() {
 	//Push CS high to stop the SPI comms interface
 	gpioWrite(io_CS, 1);
 	//wait for the byte delay if set, allows the chip to wake up
 	if(wait_byte != 0) gpioDelay(wait_byte);
 }
 	
-void hwSPI::tx_byte(const char byte) {
+void ifaceSPI::tx_byte(const char byte) {
 	//TX Bits, data clocked in on the rising edge of CLK, MSBFirst
 	for(signed char bitIndex = 7; bitIndex >= 0; bitIndex--) {
 		//Write the current bit (input byte shifted x to the right, AND 0x01)
@@ -78,18 +99,18 @@ void hwSPI::tx_byte(const char byte) {
 		//Wait for the bit delay
 		if(wait_bit != 0) gpioDelay(wait_bit);
 		
-		
-		gpioWrite(io_SCLK, 1);                    //Set the clock pin HIGH
-		if(wait_clk != 0) gpioDelay(wait_clk); //Delay if selected
-		gpioWrite(io_SCLK, 0);                    //Set the clock pin LOW
-		if(wait_clk != 0) gpioDelay(wait_clk); //Delay if selected
+		//Cycle the SCLK pin, and delay if selected
+		gpioWrite(io_SCLK, 1);
+		if(wait_clk != 0) gpioDelay(wait_clk);
+		gpioWrite(io_SCLK, 0);
+		if(wait_clk != 0) gpioDelay(wait_clk);
 	}
 
 	//Wait for the byte delay if selected
 	if(wait_byte != 0) gpioDelay(wait_byte);	
 }
 
-char hwSPI::rx_byte(void) {
+char ifaceSPI::rx_byte(void) {
 	char data = 0;
 	
 	//RX Bits into data, bit present on falling edge, MSBFirst
@@ -105,10 +126,11 @@ char hwSPI::rx_byte(void) {
 		//Wait for the bit delay
 		if(wait_bit != 0) gpioDelay(wait_bit);
 		
-		gpioWrite(io_SCLK, 1);                 //Set the clock pin HIGH
-		if(wait_clk != 0) gpioDelay(wait_clk); //Delay if selected
-		gpioWrite(io_SCLK, 0);                 //Set the clock pin LOW
-		if(wait_clk != 0) gpioDelay(wait_clk); //Delay if selected
+		//Cycle the SCLK pin, and delay if selected
+		gpioWrite(io_SCLK, 1);
+		if(wait_clk != 0) gpioDelay(wait_clk);
+		gpioWrite(io_SCLK, 0);
+		if(wait_clk != 0) gpioDelay(wait_clk);
 	}
 	
 	//Wait for the byte delay if selected
@@ -121,19 +143,18 @@ char hwSPI::rx_byte(void) {
 
 
 
+//TODO move this?
 /*** Splasher specific functions **********************************************/
-namespace splasher {
+namespace Splasher {
 
 void dumpFlashToFile(Device &dev, BinFile &file) {
 	//TODO This is forced to use SPI for the moment. Fix this
-	//TODO inherit "readBytes" or something function
 	
-	/*** Information printing, Agnostic of protocol ***************************/
-	std::cout << "\nReading " << dev.bytes << " bytes, at " << dev.KHz
-	          << "KHz to " << file.getFilename() << "\n\n" << std::flush;
+	//Print info for the user
+	dev.print();
 	
 	//create a new SPI interface (25 series) with forced pinout
-	hwSPI dut(2, 3, 4, 14, 15);
+	ifaceSPI dut(2, 3, 4, 17, 27, 22);
 	
 	dut.setTiming(0);
 	
@@ -164,14 +185,14 @@ void dumpFlashToFile(Device &dev, BinFile &file) {
 		}
 	}
 	
+	dut.stop();
+	
 	//Print finished message
 	std::cout << "\n\nFinished dumping to " << file.getFilename() << std::endl;
-	
-	dut.stop();
 	
 }
 
 
 
 
-}; //namespace splasher
+}; //namespace Splasher
