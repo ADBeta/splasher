@@ -79,6 +79,7 @@ void BinFile::pushByteToArray(const char byte) {
 //Flushes the byteArray to the file, returns exit status.
 //0 = success		1 = failure
 int BinFile::flushArrayToFile() {
+	//TODO
 	//Check the file is open
 	
 	//Check the array is OK

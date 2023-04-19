@@ -7,21 +7,30 @@
 * With the ability to support many protocols, including SPI, DSPI, QSPI, I2C,
 * and custom non-standard protocols certain manufacturers use.
 *
+
+TODO unsigned long to uin32_t etc
+#exception stuff
+
+error return eqiv of std::string::npos
+
+
+
 * (c) ADBeta
-* v0.0.1
-* 11 Apr 2023
+* v0.1.2
+* 19 Apr 2023
 *******************************************************************************/
 #include <iostream>
 
 #include <pigpio.h>
 
+#include "helper.hpp"
 #include "CLIah.hpp"
 #include "filemanager.hpp"
 #include "hardware.hpp"
 
 /*** Pre-defined output messages **********************************************/
 namespace message {
-const char *copyright = "\nsplasher 2023 ADBeta(c)";
+const char *copyright = "\nSplasher -RPi Flash Program- (c) 2023 ADBeta";
 
 const char *shortHelp = "Usage: splasher [binary file] [options]\n\
 use --help for full help information\n";
@@ -33,15 +42,17 @@ Options:\n\
 -b, --bytes\t\tHow many bytes to read from the device. Allows K and M suffix \
 to specify KiB or MiB\n\
 -s, --speed\t\t(in KHz) The speed of the CLK pin cycle, All other timings \
-derive from this. (\"-s max\" unlimits the bus speed)\n";
+derive from this. (\"-s max\" delimits the bus speed no matter the type)\n";
+
+const char *gpioFailed = "pigpio Failed to initilaise the GPIO...\n";
 
 
 const char *speedNotValid = "Speed (in KHz) input is invalid\n";
 const char *speedTooHigh = "Speed (in KHz) is too high, Maximum is 1000KHz\n";
 const char *speedDefault = "Speed not specified, using default of 100KHz\n";
 
-const char *bytesNotValid = "Bytes argument input is invalid. valid input e.g. \
--b 100    -b 100K    -b 2M\n";
+const char *bytesNotValid = "Bytes input is invalid. example valid input: \
+-b 1024  -b 2M\n";
 const char *bytesNotSpecified = "Bytes to read has not been specified\n";
 const char *bytesTooLarge = "Bytes is too large, byte limit is 256MiB\n";
 } //namespace message
@@ -130,13 +141,17 @@ unsigned long convertBytes(std::string byteString) {
 
 /*** Main *********************************************************************/
 int main(int argc, char *argv[]){
-	/*** Generic pigpio stuff *************************************************/
-	if(gpioInitialise() < 0) { //TODO message and return exit_failure
-		std::cerr << "Error: Failed to initialise the GPIO" << std::endl;
-		return 1;
+	/*** pigpio Setup *********************************************************/
+	if(gpioInitialise() < 0) {
+		std::cerr << message::gpioFailed;
+		exit(EXIT_FAILURE);
 	}
 
 	std::cout << "EVALUATION DEMO ONLY" << std::endl;
+	
+	
+	std::cout << stringToInt("6969") << stringToInt("fff") << std::endl;
+	
 
 	/*** Define CLIah Arguments ***********************************************/
 	//CLIah::Config::verbose = true; //Set verbosity when match is found
@@ -166,7 +181,7 @@ int main(int argc, char *argv[]){
 		"-b"
 	);
 
-	/***TODO User Argument handling ***********************************************/
+	/*** Basic User CLI Arg Handling ******************************************/
 	//Get CLIah to scan the CLI Args
 	CLIah::analyseArgs(argc, argv);
 	
@@ -208,9 +223,20 @@ int main(int argc, char *argv[]){
 	}; //struct Device
 	*/
 	
+	
+	
+	
+	
+	
+	
+	
+	
 	//Primary Device object created
 	Device priDev;
 	
+	
+	
+	//TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
 	/*** Get KHz speed of device **********************************************/
 	if( CLIah::isDetected("Speed") ) {
 		//Convert the KHz string into an int
@@ -240,10 +266,6 @@ int main(int argc, char *argv[]){
 		std::cerr << message::bytesNotSpecified;
 		exit(EXIT_FAILURE);
 	}
-	
-	
-	
-	
 	
 	
 	

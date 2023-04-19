@@ -78,19 +78,20 @@ class ifaceSPI {
 
 
 
-/*** Splasher General Functions ***********************************************/
+/*** General Splasher Namespace ***********************************************/
 namespace Splasher {
+	//Verbose flag, and how many bytes per CLI Notification. 0 = disabled
+	extern unsigned long verboseBytes;
 
-//Dump bytes from the Flash to the File. Pass file and device.
-//This function honours offset, KHz, size etc
-void dumpFlashToFile(Device &dev, BinFile &file);
-
-
-
-
-}; //namespace splasher
+	
+	
+	//Dump n bytes from offset from the Flash to the File.
+	void dumpFlashToFile(Device &dev, BinFile &file);
 
 
+
+
+}; //namespace Splasher
 
 
 #endif

@@ -144,10 +144,15 @@ char ifaceSPI::rx_byte(void) {
 
 
 //TODO move this?
-/*** Splasher specific functions **********************************************/
-namespace Splasher {
 
-void dumpFlashToFile(Device &dev, BinFile &file) {
+/*** Splasher namespace variables (extern declares) ***************************/
+namespace Splasher {
+	//Verbose flag, and how many bytes per CLI Notification. 0 = disabled
+	unsigned long verboseBytes;
+	
+}; //namespace Splasher
+
+void Splasher::dumpFlashToFile(Device &dev, BinFile &file) {
 	//TODO This is forced to use SPI for the moment. Fix this
 	
 	//Print info for the user
@@ -163,6 +168,8 @@ void dumpFlashToFile(Device &dev, BinFile &file) {
 	//SPI 25 Series "Read" command
 	dut.tx_byte(0x03);
 	
+	
+	//TODO Array, make tx [array],size          maybe rx [array], size
 	//Address (forced to start from 0) for now TODO
 	dut.tx_byte(0x00);
 	dut.tx_byte(0x00);
@@ -172,16 +179,19 @@ void dumpFlashToFile(Device &dev, BinFile &file) {
 	unsigned long KiBDone = 0;
 	unsigned long maxByte = dev.bytes + 1;
 
+	unsigned int follower = 0;
+
 	for(unsigned long cByte = 1; cByte < maxByte; cByte++) {
 		//Push the read byte to the file
 		file.pushByteToArray( dut.rx_byte() );
 		
 		//Update user every 1024 bytes
-		if(cByte % 1024 == 0) {
+		if(++follower == 102400) {
 			++KiBDone;
 			
+			follower = 0;
 			//Go to beginning of line (Requires \n) and print status
-			std::cout << "\rDumped " << KiBDone << "KiB" << std::flush;
+			std::cout << "\rDumped " << KiBDone * 100 << "KiB" << std::flush;
 		}
 	}
 	
@@ -192,7 +202,3 @@ void dumpFlashToFile(Device &dev, BinFile &file) {
 	
 }
 
-
-
-
-}; //namespace Splasher

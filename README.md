@@ -74,6 +74,9 @@ TODO
 * I2C
 * init read / init write
 * inherited class members (for expansion)
+* make splasher a class with functions and flags
+* Add verbose flag to user input, allow the same selection that -b has
+* increase red efficiency - less verbose and selectable
 
 ----
 ## Licence
