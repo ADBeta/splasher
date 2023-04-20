@@ -8,7 +8,7 @@
 * and custom non-standard protocols certain manufacturers use.
 *
 * (c) ADBeta
-* v0.1.6
+* v0.2.0
 * 20 Apr 2023
 *******************************************************************************/
 #include <iostream>
@@ -39,20 +39,23 @@ an SPI Interface - W25 Series Flash Protocol and a read operation to the file\n\
 Options:\n\
 -h, --help\t\tShow this help message\n\
 -b, --bytes\t\tHow many bytes to read from the device. Allows K and M suffix\n\
+-o, --offset\t\tOffset byte to start from. Allows K and M Suffix like -b\n\
 -s, --speed\t\tThe speed of the interface in KHz, \"-s 0\" is fastest.\n\
 -v, --verbose\t\tNumber of bytes to read/write before a heartbeat.\n\
 \t\t\tAllows K and M suffix, \"-v 0\" disables verbosity (slightly faster)\n\
 \nPlease see /docs/Usage.txt for more help";
 
 //// warning messages ////
-const char *gpioFailed = "pigpio Failed to initilaise the GPIO...\n";
-
-
-const char *speedNotValid = "Speed (in KHz) input is invalid\n";
-const char *speedTooHigh = "Speed (in KHz) is too high, Maximum is 1000KHz\n";
+const char *warn = "Warning: ";
 const char *speedDefault = "Speed not specified, using default of 100KHz\n";
 
 
+//// error messages ////
+const char *error = "Error: ";
+const char *gpioFailed = "pigpio Failed to initilaise the GPIO...\n";
+const char *noFilename = "Filename to read or write was not given.\n";
+const char *speedNotValid = "Speed (in KHz) input is invalid\n";
+const char *speedTooHigh = "Speed (in KHz) is too high, Maximum is 1000KHz\n";
 const char *bytesNotValid = "Bytes input is invalid. example valid input: \
 -b 1024  -b 2M\n";
 const char *bytesTooLarge = "Bytes is too large, byte limit is 256MiB\n";
@@ -64,7 +67,7 @@ const char *bytesNotSpecified = "Bytes to read has not been specified\n";
 int main(int argc, char *argv[]){
 	/*** pigpio Setup *********************************************************/
 	if(gpioInitialise() < 0) {
-		std::cerr << message::gpioFailed;
+		std::cerr << message::error << message::gpioFailed;
 		exit(EXIT_FAILURE);
 	}
 
@@ -82,6 +85,14 @@ int main(int argc, char *argv[]){
 		CLIah::ArgType::flag,   //Argument type
 		"-h"                    //Alias match string
 	);
+	
+	//How many bytes to read from device
+	CLIah::addNewArg(
+		"Bytes",
+		"--bytes",
+		CLIah::ArgType::subcommand,
+		"-b"
+	);
 
 	//Speed (in KHz) of the device
 	CLIah::addNewArg(
@@ -90,13 +101,21 @@ int main(int argc, char *argv[]){
 		CLIah::ArgType::subcommand,
 		"-s"
 	);
-
-	//How many bytes to read from device
+	
+	//How many bytes to read or write before giving a heartbeat
 	CLIah::addNewArg(
-		"Bytes",
-		"--bytes",
+		"Verbose",
+		"--verbose",
 		CLIah::ArgType::subcommand,
-		"-b"
+		"-v"
+	);
+	
+	//Offset byte val to start reading or writing from
+	CLIah::addNewArg(
+		"Offset",
+		"--offset",
+		CLIah::ArgType::subcommand,
+		"-o"
 	);
 
 	/*** Basic User CLI Arg Handling ******************************************/
@@ -115,16 +134,10 @@ int main(int argc, char *argv[]){
 		exit(EXIT_SUCCESS);
 	}
 	
-	
-	
-	//TODO Minimum input requirememnts testing
-	
-	
-	
 	/*** Filename handling ****************************************************/	
 	//Get the user input filename, error if one is not provided
 	if( CLIah::stringVector.size() == 0 ) {
-		std::cerr << "Error: No filename provided" << std::endl; //TODO err message this
+		std::cerr << message::error << message::noFilename;
 		exit(EXIT_FAILURE);
 	}
 	
@@ -156,22 +169,49 @@ int main(int argc, char *argv[]){
 	
 	
 	//Primary Device object created
-	Device priDev;
+	Device priDev; //TODO rename
+
+	/*** Get bytes to read from device ****************************************/
+	//Get bytes from user if specified, exit if not
+	if( CLIah::isDetected("Bytes") ) {
+		unsigned long byteVal = byteStringToInt( CLIah::getSubstring("Bytes") );
+		
+		//If byteVal is 0, or bad input exit
+		if(byteVal == 0 || byteVal == error::bad_input) {
+			std::cerr << message::error << message::bytesNotValid;
+			exit(EXIT_FAILURE);
+		}
+		
+		//Make sure the bytes selected are not too big (Limit to 256MB)
+		if(byteVal > 268435456) {
+			std::cerr << message::error << message::bytesTooLarge;
+			exit(EXIT_FAILURE);
+		}
+		
+		//if no errors, set the device bytes value
+		priDev.bytes = byteVal;
+		
+	} else {
+		//If no input bytes given, exit
+		std::cerr << message::error << message::bytesNotSpecified;
+		exit(EXIT_FAILURE);
+	}
+
 	
 	/*** Get KHz speed of device **********************************************/
 	if( CLIah::isDetected("Speed") ) {
-				//Convert the speed string into an int
+		//Convert the speed string into an int
 		unsigned int speedVal = intStringToInt( CLIah::getSubstring("Speed") );
 		
 		//If speedVal returned an error, exit
 		if(speedVal == error::bad_input) {
-			std::cerr << message::speedNotValid;
+			std::cerr << message::error << message::speedNotValid;
 			exit(EXIT_FAILURE);
 		}
 		
 		//If the speedVal is too high, print error, but continue //TODO exits atm
 		if(speedVal > GPIO_MAX_SPEED) {
-			std::cerr << message::speedTooHigh;
+			std::cerr << message::error << message::speedTooHigh;
 			exit(EXIT_FAILURE); //TODO
 			speedVal = GPIO_MAX_SPEED;
 		}
@@ -181,35 +221,11 @@ int main(int argc, char *argv[]){
 		
 	} else {
 		//If no user input, warn that default is being used, and set it
-		std::cout << message::speedDefault; //TODO Remove this message to funct
+		std::cout << message::warn << message::speedDefault; //TODO Remove this message to funct
 		priDev.KHz = 100;
 	}
 	
-	/*** Get bytes to read from device ****************************************/
-	//Get bytes from user if specified TODO add auto detect
-	if( CLIah::isDetected("Bytes") ) {
-		unsigned long byteVal = byteStringToInt( CLIah::getSubstring("Bytes") );
-		
-		//If byteVal is 0, or bad input exit
-		if(byteVal == 0 || byteVal == error::bad_input) {
-			std::cerr << message::bytesNotValid;
-			exit(EXIT_FAILURE);
-		}
-		
-		//Make sure the bytes selected are not too big (Limit to 256MB)
-		if(byteVal > 268435456) {
-			std::cerr << message::bytesTooLarge;
-			exit(EXIT_FAILURE);
-		}
-		
-		//if no errors, set the device bytes value
-		priDev.bytes = byteVal;
-		
-	} else {
-		//TODO If no input bytes given, exit
-		std::cerr << message::bytesNotSpecified;
-		exit(EXIT_FAILURE);
-	}
+	
 	
 	
 	
@@ -223,4 +239,4 @@ int main(int argc, char *argv[]){
 	//Terminate the GPIO handler and exit
 	gpioTerminate();
 	return 0;
-} 
+}

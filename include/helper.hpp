@@ -15,7 +15,6 @@
 #ifndef SPLASHER_HELPER_H
 #define SPLASHER_HELPER_H
 
-
 /*** definitions and macros ***************************************************/
 namespace error {
 	//Keep a uint32_t max value to return on input error in functions

@@ -55,6 +55,9 @@ class ifaceSPI {
 	//Initialise the interface to basic non-selected idle state
 	void init();
 	
+	//TODO make generic KHZ to us converter, then impliment it for this.
+	//Maybe inherit?
+	
 	//Set the internal delay times for key aspects of the interface
 	void setTiming(unsigned int KHz);
 	
