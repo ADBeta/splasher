@@ -20,19 +20,26 @@
 #include "filemanager.hpp"
 #include "hardware.hpp"
 
+/*** Const values and macros **************************************************/
+#define GPIO_MAX_SPEED 1000
+
 /*** Pre-defined output messages **********************************************/
 namespace message {
-const char *copyright = "\nSplasher(c) 2023 ADBeta";
+const char *copyright = "\nSplasher(c) 2023 ADBeta\n";
 
 const char *shortHelp = "Usage: splasher [binary file] [options]\n\
-use --help for full help information\n";
+use --help for full help information\n\n";
 
 const char *longHelp =  "Usage: splasher [binary file] [options]\n\n\
-By default .......TODO \n\n\
+By default splasher REQUIRES a binary file as its first argument and at least\n\
+the --bytes argument set, everything else is optional.\n\
+If no further arguments are passed, splasher will assume a speed of 100KHz,\n\
+an SPI Interface - W25 Series Flash Protocol and a read operation to the file\n\
+\n\
 Options:\n\
 -h, --help\t\tShow this help message\n\
 -b, --bytes\t\tHow many bytes to read from the device. Allows K and M suffix\n\
--s, --speed\t\tThe speed of the interface in KHz, \"-s max\" delimits the bus\n\
+-s, --speed\t\tThe speed of the interface in KHz, \"-s 0\" is fastest.\n\
 -v, --verbose\t\tNumber of bytes to read/write before a heartbeat.\n\
 \t\t\tAllows K and M suffix, \"-v 0\" disables verbosity (slightly faster)\n\
 \nPlease see /docs/Usage.txt for more help";
@@ -52,35 +59,6 @@ const char *bytesTooLarge = "Bytes is too large, byte limit is 256MiB\n";
 const char *bytesNotSpecified = "Bytes to read has not been specified\n";
 
 } //namespace message
-
-/*** Helper functions *********************************************************/
-//converts a string into a KHz value - for user argument handling
-//Negative values are coded errors (-1 not valid   -2 too large input)
-int convertKHz(std::string speedString) {
-	//First check if the input is "max"
-	if(speedString.compare("max") == 0) {
-		//Unlimit the KHz
-		return 0;
-	}
-	
-	//If the string contains non-numeral chars, error -1
-	if(speedString.find_first_not_of("0123456789") != std::string::npos) {
-		std::cerr << message::speedNotValid;
-		return -1;
-	}
-	
-	//Otherwise, convert it to an int
-	int speedInt = std::stoi(speedString);
-	
-	//Detect if the input value is too high, if so return -2
-	if(speedInt > 1000) {
-		std::cerr << message::speedTooHigh;
-		return -2;
-	}
-	
-	//If no errors, return the speed int
-	return speedInt;
-}
 
 /*** Main *********************************************************************/
 int main(int argc, char *argv[]){
@@ -127,20 +105,26 @@ int main(int argc, char *argv[]){
 	
 	//If no arguments or strings were given, error with usage
 	if( argc == 1 ) {
-		std::cout << message::shortHelp << std::endl;
+		std::cout << message::shortHelp;
 		exit(EXIT_FAILURE);
 	}
 	
 	//If help was requested, print the long help message then exit.
 	if( CLIah::isDetected("Help") ) {
-		std::cout << message::longHelp << message::copyright << std::endl;
+		std::cout << message::longHelp << message::copyright;
 		exit(EXIT_SUCCESS);
 	}
+	
+	
+	
+	//TODO Minimum input requirememnts testing
+	
+	
 	
 	/*** Filename handling ****************************************************/	
 	//Get the user input filename, error if one is not provided
 	if( CLIah::stringVector.size() == 0 ) {
-		std::cerr << "Error: No filename provided" << std::endl;
+		std::cerr << "Error: No filename provided" << std::endl; //TODO err message this
 		exit(EXIT_FAILURE);
 	}
 	
@@ -174,18 +158,26 @@ int main(int argc, char *argv[]){
 	//Primary Device object created
 	Device priDev;
 	
-	
-	
-	//TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
 	/*** Get KHz speed of device **********************************************/
 	if( CLIah::isDetected("Speed") ) {
-		//Convert the KHz string into an int
-		int KHzVal = convertKHz( CLIah::getSubstring("Speed") );
+				//Convert the speed string into an int
+		unsigned int speedVal = intStringToInt( CLIah::getSubstring("Speed") );
 		
-		//If the return int is one of the -x errors, exit
-		if(KHzVal < 0) exit(EXIT_FAILURE);
+		//If speedVal returned an error, exit
+		if(speedVal == error::bad_input) {
+			std::cerr << message::speedNotValid;
+			exit(EXIT_FAILURE);
+		}
 		
-		priDev.KHz = KHzVal;
+		//If the speedVal is too high, print error, but continue //TODO exits atm
+		if(speedVal > GPIO_MAX_SPEED) {
+			std::cerr << message::speedTooHigh;
+			exit(EXIT_FAILURE); //TODO
+			speedVal = GPIO_MAX_SPEED;
+		}
+		
+		//If everything is okay, set the device speed
+		priDev.KHz = speedVal;
 		
 	} else {
 		//If no user input, warn that default is being used, and set it

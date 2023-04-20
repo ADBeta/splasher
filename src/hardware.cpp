@@ -17,9 +17,19 @@
 /*** Device Class Functions ***************************************************/
 void Device::print() {
 	//TODO device string selectable from array or group
-	std::cout << "Reading -an SPI- deivce: " << this->bytes << " bytes at " 
-	          << this->KHz << "KHz" << std::endl;
-	          
+	
+	//TODO better handling
+	std::cout << "Reading -an SPI- deivce: " << this->bytes << " bytes at ";
+	
+	if(this->KHz == 0) {
+		std::cout << "maximum speed";
+	} else {
+		std::cout << this->KHz << "KHz";
+	}
+	
+	std::cout << std::endl;
+	
+	
 	//TODO offset print
 }
 

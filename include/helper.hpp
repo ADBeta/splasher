@@ -24,9 +24,11 @@ namespace error {
 
 /*** Helper Functions *********************************************************/
 //Converts a byte string to an int, with 'K' or 'M' support (KiB or MiB).
-//Returns uint32_t max if invalid input. like std::string::npos
+//Returns uint32_t max (error::bad_input) if input is invalid
 uint32_t byteStringToInt( std::string );
 
-
+//Convert a regular int string to an int.
+//Returns uint32_t max (error::bad_input) if input is invalid
+uint32_t intStringToInt( std::string );
 
 #endif

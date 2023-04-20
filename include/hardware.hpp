@@ -37,7 +37,7 @@ class Device {
 	public:
 	Interface iface;      //What interface is the device using?
 	Protocol prot;        //What protocol is the device compat with?
-	int KHz;              //How fast the device is in KHz (0 = max speed)
+	unsigned int KHz;     //How fast the device is in KHz (0 = max speed)
 	unsigned long bytes;  //How many bytes does the device store
 	unsigned long offset; //How many bytes to offset the read position
 	
