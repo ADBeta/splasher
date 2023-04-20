@@ -7,16 +7,8 @@
 * With the ability to support many protocols, including SPI, DSPI, QSPI, I2C,
 * and custom non-standard protocols certain manufacturers use.
 *
-
-TODO unsigned long to uin32_t etc
-#exception stuff
-
-error return eqiv of std::string::npos
-
-
-
 * (c) ADBeta
-* v0.1.4
+* v0.1.6
 * 20 Apr 2023
 *******************************************************************************/
 #include <iostream>
@@ -90,65 +82,6 @@ int convertKHz(std::string speedString) {
 	return speedInt;
 }
 
-unsigned long convertBytes(std::string byteString) {
-	//Keep a multiplier, 1 by default for bytes, changes via 'K' or 'M'
-	unsigned int multiplier = 1;
-	
-	/*** Detect Multiplier Char ***********************************************/
-	//Find the first non-numeral character in the string
-	size_t notNumeral = byteString.find_first_not_of("0123456789");
-	//Get the index of the last char in the string
-	size_t lastIndx = byteString.length() - 1;
-	
-	//If there is a non-numeral char in the string, check it
-	if(notNumeral != std::string::npos) {
-		//if that non-numeral char is NOT the last char, error
-		if(notNumeral != lastIndx) {
-			std::cerr << message::bytesNotValid;
-			return 0;
-		}
-		
-		//If the last char is either 'K' or 'M' adjust the multiplier
-		char lastChar = byteString[lastIndx];
-		if(lastChar == 'K') {
-			multiplier = 1024; //1KiB
-			
-		} else if(lastChar == 'M') {
-			multiplier = 1048576; //1MiB
-		
-		} else {
-			//if the last char is NOT 'K' or 'M', Error and exit
-			std::cerr << message::bytesNotValid;
-			return 0;
-		}
-		
-		//Remove the last char from the string, we are done with it
-		byteString.pop_back();
-	}
-	
-	/*** Convert and multiply the input number ********************************/
-	//convert the passed string into an int and set device bytes
-	unsigned long bytes = std::stoi(byteString) * multiplier;
-	
-	
-	//If everything is good, return the value
-	return bytes;
-
-}
-
-/******************************************************************************/
-
-void printVal( std::string input ) {
-	unsigned long output = stringToInt(input);
-	
-	if( output == error::bad_input) {
-		std::cout << "error with conversion\n";
-	} else {
-		std::cout << output << std::endl;
-	}	
-}
-
-
 /*** Main *********************************************************************/
 int main(int argc, char *argv[]){
 	/*** pigpio Setup *********************************************************/
@@ -158,13 +91,7 @@ int main(int argc, char *argv[]){
 	}
 
 	std::cout << "EVALUATION DEMO ONLY" << std::endl;
-	
-	printVal("6969");
-	printVal("420");
-	printVal("1M");
-	printVal("ff");
-	
-	
+		
 
 	/*** Define CLIah Arguments ***********************************************/
 	//CLIah::Config::verbose = true; //Set verbosity when match is found
@@ -269,16 +196,16 @@ int main(int argc, char *argv[]){
 	/*** Get bytes to read from device ****************************************/
 	//Get bytes from user if specified TODO add auto detect
 	if( CLIah::isDetected("Bytes") ) {
-		unsigned long byteVal = stringToInt( CLIah::getSubstring("Bytes") );
+		unsigned long byteVal = byteStringToInt( CLIah::getSubstring("Bytes") );
 		
 		//If byteVal is 0, or bad input exit
-		if(byteVal == 0 || byteVal == error:bad_input) {
+		if(byteVal == 0 || byteVal == error::bad_input) {
 			std::cerr << message::bytesNotValid;
-			
+			exit(EXIT_FAILURE);
 		}
 		
 		//Make sure the bytes selected are not too big (Limit to 256MB)
-		if(bytes > 268435456) {
+		if(byteVal > 268435456) {
 			std::cerr << message::bytesTooLarge;
 			exit(EXIT_FAILURE);
 		}

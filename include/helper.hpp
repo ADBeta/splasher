@@ -23,9 +23,9 @@ namespace error {
 }; //namespace error
 
 /*** Helper Functions *********************************************************/
-//Converts a string to an int, with 'K' or 'M' support (KiB or Mib).
+//Converts a byte string to an int, with 'K' or 'M' support (KiB or MiB).
 //Returns uint32_t max if invalid input. like std::string::npos
-uint32_t stringToInt( std::string );
+uint32_t byteStringToInt( std::string );
 
 
 

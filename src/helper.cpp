@@ -21,7 +21,7 @@ namespace error {
 };
 
 /*** Helper Functions *********************************************************/
-uint32_t stringToInt(std::string intString) {
+uint32_t byteStringToInt(std::string intString) {
 	//Multiplier defaults to 1, but gets set when M or K is detected correctly
 	unsigned int multiplier = 1;
 	
