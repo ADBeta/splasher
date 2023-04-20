@@ -12,14 +12,16 @@
 #include "helper.hpp"
 
 #include <string>
+#include <cstdint>
 
-
-
-/*** Exception declarations ***************************************************/
-SplasherException invalid_input("Input is invalid or malformed");
+/*** definitions and macros ***************************************************/
+namespace error {
+	//uint32_t max value to return on input error in functions that return uint32_t
+	uint32_t bad_input = 0-1;
+};
 
 /*** Helper Functions *********************************************************/
-unsigned long stringToInt(std::string intString) {
+uint32_t stringToInt(std::string intString) {
 	//Multiplier defaults to 1, but gets set when M or K is detected correctly
 	unsigned int multiplier = 1;
 	
@@ -33,7 +35,7 @@ unsigned long stringToInt(std::string intString) {
 		
 		//if that non-numeral char is NOT the last char, throw custom exception
 		if(notNumeral != lastCharIndx) {
-			throw invalid_input;
+			return error::bad_input;
 		}
 		
 		//If the last char is either 'K' or 'M' adjust the multiplier
@@ -46,7 +48,7 @@ unsigned long stringToInt(std::string intString) {
 		
 		//if the last char is NOT 'K' or 'M', throw exception
 		} else {
-			throw invalid_input;
+			return error::bad_input;
 		}
 			
 		//Remove the last char from the string, helps stoi

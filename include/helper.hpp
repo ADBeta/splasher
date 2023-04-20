@@ -10,33 +10,22 @@
 * (c) ADBeta
 *******************************************************************************/
 #include <string>
-#include <exception>
+#include <cstdint>
 
 #ifndef SPLASHER_HELPER_H
 #define SPLASHER_HELPER_H
 
 
-/*** Exception declarations ***************************************************/
-class SplasherException : public std::exception {
-	public:
-	SplasherException(const char* msg) {
-		errMsg = msg;
-	}
-
-	private:
-	const char *errMsg;
-	
-	const char *what () const throw() {
-		return errMsg;
-	}
-};
-
-extern SplasherException invalid_input;
+/*** definitions and macros ***************************************************/
+namespace error {
+	//Keep a uint32_t max value to return on input error in functions
+	extern uint32_t bad_input;
+}; //namespace error
 
 /*** Helper Functions *********************************************************/
 //Converts a string to an int, with 'K' or 'M' support (KiB or Mib).
-//Throws exception (invalid_input) if input is not valid
-unsigned long stringToInt( std::string );
+//Returns uint32_t max if invalid input. like std::string::npos
+uint32_t stringToInt( std::string );
 
 
 

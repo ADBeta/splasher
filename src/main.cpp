@@ -16,8 +16,8 @@ error return eqiv of std::string::npos
 
 
 * (c) ADBeta
-* v0.1.2
-* 19 Apr 2023
+* v0.1.4
+* 20 Apr 2023
 *******************************************************************************/
 #include <iostream>
 
@@ -30,20 +30,22 @@ error return eqiv of std::string::npos
 
 /*** Pre-defined output messages **********************************************/
 namespace message {
-const char *copyright = "\nSplasher -RPi Flash Program- (c) 2023 ADBeta";
+const char *copyright = "\nSplasher(c) 2023 ADBeta";
 
 const char *shortHelp = "Usage: splasher [binary file] [options]\n\
 use --help for full help information\n";
 
 const char *longHelp =  "Usage: splasher [binary file] [options]\n\n\
-By default .......TODO \n\
+By default .......TODO \n\n\
 Options:\n\
 -h, --help\t\tShow this help message\n\
--b, --bytes\t\tHow many bytes to read from the device. Allows K and M suffix \
-to specify KiB or MiB\n\
--s, --speed\t\t(in KHz) The speed of the CLK pin cycle, All other timings \
-derive from this. (\"-s max\" delimits the bus speed no matter the type)\n";
+-b, --bytes\t\tHow many bytes to read from the device. Allows K and M suffix\n\
+-s, --speed\t\tThe speed of the interface in KHz, \"-s max\" delimits the bus\n\
+-v, --verbose\t\tNumber of bytes to read/write before a heartbeat.\n\
+\t\t\tAllows K and M suffix, \"-v 0\" disables verbosity (slightly faster)\n\
+\nPlease see /docs/Usage.txt for more help";
 
+//// warning messages ////
 const char *gpioFailed = "pigpio Failed to initilaise the GPIO...\n";
 
 
@@ -51,10 +53,12 @@ const char *speedNotValid = "Speed (in KHz) input is invalid\n";
 const char *speedTooHigh = "Speed (in KHz) is too high, Maximum is 1000KHz\n";
 const char *speedDefault = "Speed not specified, using default of 100KHz\n";
 
+
 const char *bytesNotValid = "Bytes input is invalid. example valid input: \
 -b 1024  -b 2M\n";
-const char *bytesNotSpecified = "Bytes to read has not been specified\n";
 const char *bytesTooLarge = "Bytes is too large, byte limit is 256MiB\n";
+const char *bytesNotSpecified = "Bytes to read has not been specified\n";
+
 } //namespace message
 
 /*** Helper functions *********************************************************/
@@ -126,11 +130,6 @@ unsigned long convertBytes(std::string byteString) {
 	//convert the passed string into an int and set device bytes
 	unsigned long bytes = std::stoi(byteString) * multiplier;
 	
-	//Make sure the bytes are not too high (Limit to 256MB)
-	if(bytes > 268435456) {
-		std::cerr << message::bytesTooLarge;
-		return 0;
-	}
 	
 	//If everything is good, return the value
 	return bytes;
@@ -138,6 +137,17 @@ unsigned long convertBytes(std::string byteString) {
 }
 
 /******************************************************************************/
+
+void printVal( std::string input ) {
+	unsigned long output = stringToInt(input);
+	
+	if( output == error::bad_input) {
+		std::cout << "error with conversion\n";
+	} else {
+		std::cout << output << std::endl;
+	}	
+}
+
 
 /*** Main *********************************************************************/
 int main(int argc, char *argv[]){
@@ -149,8 +159,11 @@ int main(int argc, char *argv[]){
 
 	std::cout << "EVALUATION DEMO ONLY" << std::endl;
 	
+	printVal("6969");
+	printVal("420");
+	printVal("1M");
+	printVal("ff");
 	
-	std::cout << stringToInt("6969") << stringToInt("fff") << std::endl;
 	
 
 	/*** Define CLIah Arguments ***********************************************/
@@ -256,16 +269,30 @@ int main(int argc, char *argv[]){
 	/*** Get bytes to read from device ****************************************/
 	//Get bytes from user if specified TODO add auto detect
 	if( CLIah::isDetected("Bytes") ) {
-		unsigned long byteVal = convertBytes( CLIah::getSubstring("Bytes") );
+		unsigned long byteVal = stringToInt( CLIah::getSubstring("Bytes") );
 		
-		//If byteVal is 0, either via passed val, or due to error, exit
-		if(byteVal == 0) exit(EXIT_FAILURE);
+		//If byteVal is 0, or bad input exit
+		if(byteVal == 0 || byteVal == error:bad_input) {
+			std::cerr << message::bytesNotValid;
+			
+		}
 		
-		priDev.bytes = byteVal;		
+		//Make sure the bytes selected are not too big (Limit to 256MB)
+		if(bytes > 268435456) {
+			std::cerr << message::bytesTooLarge;
+			exit(EXIT_FAILURE);
+		}
+		
+		//if no errors, set the device bytes value
+		priDev.bytes = byteVal;
+		
 	} else {
+		//TODO If no input bytes given, exit
 		std::cerr << message::bytesNotSpecified;
 		exit(EXIT_FAILURE);
 	}
+	
+	
 	
 	
 	
