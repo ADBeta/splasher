@@ -8,8 +8,8 @@
 * and custom non-standard protocols certain manufacturers use.
 *
 * (c) ADBeta
-* v0.2.0
-* 20 Apr 2023
+* v0.2.2
+* 21 Apr 2023
 *******************************************************************************/
 #include <iostream>
 
@@ -117,6 +117,10 @@ int main(int argc, char *argv[]){
 		CLIah::ArgType::subcommand,
 		"-o"
 	);
+	
+	//-i --interface
+	//-p --protocol
+	//-m --mode (?) TODO
 
 	/*** Basic User CLI Arg Handling ******************************************/
 	//Get CLIah to scan the CLI Args

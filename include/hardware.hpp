@@ -79,6 +79,23 @@ class ifaceSPI {
 }; //class ifaceSPI
 
 
+/*** DSPI Interface, deerived from SPI ****************************************/
+class ifaceDSPI : public ifaceSPI {
+	//Inherit the wait funct and timers, read & write in SPI mode the io_ pins,
+	//stop, start and the constructor.
+	//Redefine init, add new readDual and writeDual functions TODO Name 
+	public:
+	//Initialise the interface to basic idle state
+	void init();
+	
+	//Initialise the interface into Dual SPI idle mode (More PI_INPUTs)
+	void init_dual();
+	
+	void tx_byte_dual(const char byte);
+	char rx_byte_dual();
+	
+
+}; //class ifaceDSPI
 
 
 /*** General Splasher Namespace ***********************************************/
