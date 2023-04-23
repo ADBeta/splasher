@@ -10,6 +10,7 @@
 * (c) ADBeta
 *******************************************************************************/
 #include "helper.hpp"
+#include "CLIah.hpp"
 
 #include <string>
 #include <cstdint>
@@ -17,8 +18,73 @@
 /*** definitions and macros ***************************************************/
 namespace error {
 	//uint32_t max value to return on input error in functions that return uint32_t
-	uint32_t bad_input = 0-1;
+	uint32_t bad_input = 0 - 1;
 };
+
+/*** CLIah setup (frees space in main) ****************************************/
+void initCLIah() {
+	//CLIah::Config::verbose = true; //Set verbosity when match is found
+	CLIah::Config::stringsEnabled = true; //Set arbitrary strings allowed
+	
+	//Request help message
+	CLIah::addNewArg(
+		"Help",                 //Reference
+		"--help",               //Primary match string
+		CLIah::ArgType::flag,   //Argument type
+		"-h"                    //Alias match string
+	);
+	
+	//How many bytes to read from device
+	CLIah::addNewArg(
+		"Bytes",
+		"--bytes",
+		CLIah::ArgType::subcommand,
+		"-b"
+	);
+
+	//Speed (in KHz) of the device
+	CLIah::addNewArg(
+		"Speed",
+		"--speed",
+		CLIah::ArgType::subcommand,
+		"-s"
+	);
+	
+	//How many bytes to read or write before giving a heartbeat
+	CLIah::addNewArg(
+		"Verbose",
+		"--verbose",
+		CLIah::ArgType::subcommand,
+		"-v"
+	);
+	
+	//Offset byte val to start reading or writing from
+	CLIah::addNewArg(
+		"Offset",
+		"--offset",
+		CLIah::ArgType::subcommand,
+		"-o"
+	);
+	
+	//Select the interface (SPI, I2C, DSPI etc)
+	CLIah::addNewArg(
+		"Interface",
+		"--interface",
+		CLIah::ArgType::subcommand,
+		"-i"
+	);
+	
+	//Select which protocol to use (W25, W24, uBUS etc)
+	CLIah::addNewArg(
+		"Protocol",
+		"--protocol",
+		CLIah::ArgType::subcommand,
+		"-p"
+	);
+	
+	
+	//-m --mode (?) TODO
+}
 
 /*** Helper Functions *********************************************************/
 uint32_t byteStringToInt(std::string byteString) {

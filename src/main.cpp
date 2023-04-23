@@ -8,8 +8,8 @@
 * and custom non-standard protocols certain manufacturers use.
 *
 * (c) ADBeta
-* v0.2.2
-* 21 Apr 2023
+* v0.3.0
+* 23 Apr 2023
 *******************************************************************************/
 #include <iostream>
 
@@ -53,13 +53,17 @@ const char *speedDefault = "Speed not specified, using default of 100KHz\n";
 //// error messages ////
 const char *error = "Error: ";
 const char *gpioFailed = "pigpio Failed to initilaise the GPIO...\n";
+
+const char *bytesRequired = "The Bytes argument is required \n";
+
 const char *noFilename = "Filename to read or write was not given.\n";
+
 const char *speedNotValid = "Speed (in KHz) input is invalid\n";
 const char *speedTooHigh = "Speed (in KHz) is too high, Maximum is 1000KHz\n";
+
 const char *bytesNotValid = "Bytes input is invalid. example valid input: \
 -b 1024  -b 2M\n";
 const char *bytesTooLarge = "Bytes is too large, byte limit is 256MiB\n";
-const char *bytesNotSpecified = "Bytes to read has not been specified\n";
 
 } //namespace message
 
@@ -72,57 +76,10 @@ int main(int argc, char *argv[]){
 	}
 
 	std::cout << "EVALUATION DEMO ONLY" << std::endl;
-		
-
-	/*** Define CLIah Arguments ***********************************************/
-	//CLIah::Config::verbose = true; //Set verbosity when match is found
-	CLIah::Config::stringsEnabled = true; //Set arbitrary strings allowed
 	
-	//Request help message
-	CLIah::addNewArg(
-		"Help",                 //Reference
-		"--help",               //Primary match string
-		CLIah::ArgType::flag,   //Argument type
-		"-h"                    //Alias match string
-	);
+	//Initialise CLIah
+	initCLIah();
 	
-	//How many bytes to read from device
-	CLIah::addNewArg(
-		"Bytes",
-		"--bytes",
-		CLIah::ArgType::subcommand,
-		"-b"
-	);
-
-	//Speed (in KHz) of the device
-	CLIah::addNewArg(
-		"Speed",
-		"--speed",
-		CLIah::ArgType::subcommand,
-		"-s"
-	);
-	
-	//How many bytes to read or write before giving a heartbeat
-	CLIah::addNewArg(
-		"Verbose",
-		"--verbose",
-		CLIah::ArgType::subcommand,
-		"-v"
-	);
-	
-	//Offset byte val to start reading or writing from
-	CLIah::addNewArg(
-		"Offset",
-		"--offset",
-		CLIah::ArgType::subcommand,
-		"-o"
-	);
-	
-	//-i --interface
-	//-p --protocol
-	//-m --mode (?) TODO
-
-	/*** Basic User CLI Arg Handling ******************************************/
 	//Get CLIah to scan the CLI Args
 	CLIah::analyseArgs(argc, argv);
 	
@@ -137,6 +94,13 @@ int main(int argc, char *argv[]){
 		std::cout << message::longHelp << message::copyright;
 		exit(EXIT_SUCCESS);
 	}
+	
+	/*** Required input detection *********************************************/
+	if( CLIah::isDetected("Bytes") == false ) {
+		std::cerr << message::error << message::bytesRequired;
+		exit(EXIT_FAILURE);
+	}
+	//TODO
 	
 	/*** Filename handling ****************************************************/	
 	//Get the user input filename, error if one is not provided
@@ -176,30 +140,24 @@ int main(int argc, char *argv[]){
 	Device priDev; //TODO rename
 
 	/*** Get bytes to read from device ****************************************/
-	//Get bytes from user if specified, exit if not
-	if( CLIah::isDetected("Bytes") ) {
-		unsigned long byteVal = byteStringToInt( CLIah::getSubstring("Bytes") );
-		
-		//If byteVal is 0, or bad input exit
-		if(byteVal == 0 || byteVal == error::bad_input) {
-			std::cerr << message::error << message::bytesNotValid;
-			exit(EXIT_FAILURE);
-		}
-		
-		//Make sure the bytes selected are not too big (Limit to 256MB)
-		if(byteVal > 268435456) {
-			std::cerr << message::error << message::bytesTooLarge;
-			exit(EXIT_FAILURE);
-		}
-		
-		//if no errors, set the device bytes value
-		priDev.bytes = byteVal;
-		
-	} else {
-		//If no input bytes given, exit
-		std::cerr << message::error << message::bytesNotSpecified;
+	//Get bytes from user. Must be specified for program to run, so will exist
+	unsigned long byteVal = byteStringToInt( CLIah::getSubstring("Bytes") );
+	
+	//If byteVal is 0, or bad input exit
+	if(byteVal == 0 || byteVal == error::bad_input) {
+		std::cerr << message::error << message::bytesNotValid;
 		exit(EXIT_FAILURE);
 	}
+	
+	//Make sure the bytes selected are not too big (Limit to 256MB)
+	if(byteVal > 268435456) {
+		std::cerr << message::error << message::bytesTooLarge;
+		exit(EXIT_FAILURE);
+	}
+	
+	//if no errors, set the device bytes value
+	priDev.bytes = byteVal;
+	
 
 	
 	/*** Get KHz speed of device **********************************************/

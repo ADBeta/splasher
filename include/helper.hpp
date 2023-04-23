@@ -21,6 +21,9 @@ namespace error {
 	extern uint32_t bad_input;
 }; //namespace error
 
+//CLIah setup function
+void initCLIah();
+
 /*** Helper Functions *********************************************************/
 //Converts a byte string to an int, with 'K' or 'M' support (KiB or MiB).
 //Returns uint32_t max (error::bad_input) if input is invalid
